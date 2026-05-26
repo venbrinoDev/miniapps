@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.turbo/
+.dart_tool/
+pubspec.lock
+build/
+*.tsbuildinfo
+approvals.json
+*.log
+.DS_Store

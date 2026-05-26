@@ -1,0 +1,11 @@
+export 'src/host_client.dart';
+export 'src/capability_registry.dart';
+export 'src/approval_manager.dart';
+export 'src/capability_handler.dart';
+export 'src/models/host_config.dart';
+export 'src/models/capability_result.dart';
+export 'src/models/approval_decision.dart';
+export 'src/handlers/biometric_handler.dart';
+export 'src/handlers/camera_handler.dart';
+export 'src/handlers/gps_handler.dart';
+export 'src/handlers/storage_handler.dart';
