@@ -2,6 +2,7 @@
 import { Command } from 'commander'
 import { initCommand } from './commands/init.js'
 import { validateCommand } from './commands/validate.js'
+import { describeCommand } from './commands/describe.js'
 import { packCommand } from './commands/pack.js'
 import { runCommand } from './commands/run.js'
 
@@ -19,6 +20,11 @@ program
   .command('validate')
   .description('Validate the miniapp.json manifest')
   .action(validateCommand)
+
+program
+  .command('describe')
+  .description('Describe mini-app commands and capabilities (metadata only)')
+  .action(describeCommand)
 
 program
   .command('pack')

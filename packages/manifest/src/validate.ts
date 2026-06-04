@@ -1,7 +1,7 @@
 import type { CapabilityId } from '@miniapps/protocol'
 import { MiniAppError } from '@miniapps/protocol'
 import type { MiniAppManifest } from './schema.js'
-import { manifestSchema } from './schema.js'
+import { manifestSchema, capabilityIdSchema } from './schema.js'
 
 export interface ValidationResult {
   valid: boolean
@@ -29,7 +29,7 @@ export function validateManifest(data: unknown): ValidationResult {
     }
 
     const extraPermissions = permissionCapabilities.filter(
-      (cap) => !manifest.requiredCapabilities.includes(cap as any),
+      (cap) => !manifest.requiredCapabilities.includes(cap as CapabilityId),
     )
 
     if (extraPermissions.length > 0) {
@@ -57,7 +57,7 @@ export function assertCapabilityAllowed(manifest: MiniAppManifest, capability: C
   if (!manifest.requiredCapabilities.includes(capability)) {
     throw new MiniAppError(
       'MANIFEST_VIOLATION',
-      `Capability "${capability}" is not declared in the mini-app manifest`,
+      `Capability "${capability}" is not declared in the mini-app manifest "${manifest.id}"`,
     )
   }
 }

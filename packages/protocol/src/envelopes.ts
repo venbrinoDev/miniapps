@@ -10,6 +10,7 @@ export interface DeviceRequest<TCapability extends CapabilityId = CapabilityId> 
   capability: TCapability
   params: CapabilityParamMap[TCapability]
   reason: string
+  semantic?: string
   timeoutMs: number
 }
 
@@ -61,6 +62,7 @@ export interface ApprovalRequest {
   miniAppId: string
   capability: CapabilityId
   reason: string
+  semantic?: string
   scope: ApprovalScope
 }
 

@@ -130,6 +130,76 @@ describe('validateManifest', () => {
     })
     expect(result.valid).toBe(true)
   })
+
+  it('accepts optional description', () => {
+    const result = validateManifest({ ...validManifest, description: 'A helpful mini-app' })
+    expect(result.valid).toBe(true)
+    expect(result.manifest!.description).toBe('A helpful mini-app')
+  })
+
+  it('accepts optional category', () => {
+    const result = validateManifest({ ...validManifest, category: 'finance' })
+    expect(result.valid).toBe(true)
+    expect(result.manifest!.category).toBe('finance')
+  })
+
+  it('accepts optional instruction', () => {
+    const result = validateManifest({ ...validManifest, instruction: './SKILL.md' })
+    expect(result.valid).toBe(true)
+    expect(result.manifest!.instruction).toBe('./SKILL.md')
+  })
+
+  it('accepts optional files array', () => {
+    const result = validateManifest({
+      ...validManifest,
+      instruction: './SKILL.md',
+      files: ['./references/flow.md', './references/providers.md'],
+    })
+    expect(result.valid).toBe(true)
+    expect(result.manifest!.files).toEqual(['./references/flow.md', './references/providers.md'])
+  })
+
+  it('accepts optional commands', () => {
+    const result = validateManifest({
+      ...validManifest,
+      commands: [
+        {
+          name: 'naira.transfer',
+          description: 'Transfer money to a recipient',
+          semantic: 'Transferring funds',
+          args: [{ name: 'recipient', required: true, description: 'Transfer recipient' }],
+        },
+      ],
+    })
+    expect(result.valid).toBe(true)
+    expect(result.manifest!.commands).toHaveLength(1)
+    expect(result.manifest!.commands![0].name).toBe('naira.transfer')
+    expect(result.manifest!.commands![0].semantic).toBe('Transferring funds')
+  })
+
+  it('rejects command without name', () => {
+    const result = validateManifest({
+      ...validManifest,
+      commands: [{ name: '', description: 'Transfer', semantic: 'Transferring' }],
+    })
+    expect(result.valid).toBe(false)
+  })
+
+  it('rejects command without description', () => {
+    const result = validateManifest({
+      ...validManifest,
+      commands: [{ name: 'transfer', description: '', semantic: 'Transferring' }],
+    })
+    expect(result.valid).toBe(false)
+  })
+
+  it('rejects command without semantic', () => {
+    const result = validateManifest({
+      ...validManifest,
+      commands: [{ name: 'transfer', description: 'Transfer', semantic: '' }],
+    })
+    expect(result.valid).toBe(false)
+  })
 })
 
 describe('assertCapabilityAllowed', () => {
