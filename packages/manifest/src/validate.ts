@@ -87,7 +87,7 @@ function normalizeManifestCapabilities(manifest: MiniAppManifest): NormalizedMin
   return {
     ...manifest,
     requiredCapabilities: capabilities,
-    runtime: runtimeConfig
+    runtime: {
       ...runtimeConfig,
       capabilities,
     },

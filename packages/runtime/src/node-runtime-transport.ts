@@ -1,4 +1,5 @@
 import { MiniAppError, type DeviceRequest, type ProviderProxyCallResult } from '@miniapps/protocol'
+import type { ProviderProxyCallParams } from '@miniapps/protocol'
 import type { Transport, EventCallback } from '@miniapps/sdk'
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:18789'
@@ -27,7 +28,7 @@ export class NodeRuntimeTransport implements Transport {
       )
     }
 
-    const params = request.params
+    const params = request.params as ProviderProxyCallParams
     const providerId = String(params.providerId ?? '').trim()
     const operationId = String(params.operationId ?? '').trim()
     if (!providerId || !operationId) {

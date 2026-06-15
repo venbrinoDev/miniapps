@@ -2,6 +2,14 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { validateManifest } from '@miniapps/manifest'
 
+interface RuntimeInfo {
+  engine: 'node'
+  capabilities: string[]
+  providerProxy?: {
+    providers: Array<{ providerId: string; operationIds?: string[] }>
+  }
+}
+
 export async function describeCommand(): Promise<void> {
   const projectDir = process.cwd()
   const manifestPath = join(projectDir, 'miniapp.json')
@@ -20,6 +28,7 @@ export async function describeCommand(): Promise<void> {
   }
 
   const manifest = result.manifest!
+  const runtime = resolveRuntimeConfig(manifest.runtime)
 
   const entryPath = join(projectDir, manifest.entry)
   let describeOutput: Record<string, unknown> | null = null
@@ -55,10 +64,28 @@ export async function describeCommand(): Promise<void> {
         semantic: cmd.semantic,
         args: cmd.args ?? [],
       })),
-      capabilities: manifest.runtime?.capabilities ?? manifest.requiredCapabilities,
-      runtime: manifest.runtime,
+      capabilities: runtime.capabilities ?? manifest.requiredCapabilities,
+      runtime,
     }
   }
 
   console.log(JSON.stringify(describeOutput, null, 2))
+}
+
+function resolveRuntimeConfig(runtime: NonNullable<ReturnType<typeof validateManifest>['manifest']>['runtime']): RuntimeInfo {
+  if (!runtime || runtime === 'node') {
+    return { engine: 'node', capabilities: [] }
+  }
+  return {
+    engine: 'node',
+    capabilities: [...(runtime.capabilities ?? [])],
+    providerProxy: runtime.providerProxy
+      ? {
+          providers: runtime.providerProxy.providers.map((row) => ({
+            providerId: row.providerId,
+            operationIds: row.operationIds,
+          })),
+        }
+      : undefined,
+  }
 }
