@@ -29,4 +29,8 @@ export class CommandContext {
     const childCtx = this.buildContext(command, args ?? {}, this.sessionId)
     return entry.definition.execute(childCtx)
   }
+
+  get providers(): MiniAppInstance['providers'] {
+    return this.miniapp.providers
+  }
 }

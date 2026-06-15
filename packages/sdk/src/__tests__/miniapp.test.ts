@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { MiniApp } from '../miniapp.js'
+import { defineMiniApp } from '../builder.js'
 
 describe('MiniApp', () => {
   function createApp() {
@@ -232,5 +233,47 @@ describe('MiniApp', () => {
       files: ['./references/a.md', './references/b.md'],
     })
     expect(app.describe().files).toEqual(['./references/a.md', './references/b.md'])
+  })
+
+  it('builder registers commands, runtime requirements, and manifest output', () => {
+    const app = defineMiniApp({
+      id: 'builder-app',
+      name: 'Builder App',
+      version: '1.0.0',
+      runtime: {
+        capabilities: ['providerProxy.call'],
+        providerProxy: {
+          providers: [{ providerId: 'serper', operationIds: ['maps'] }],
+        },
+      },
+      permissions: {
+        'providerProxy.call': { reason: 'Call backend providers' },
+      },
+    })
+      .command('search', {
+        description: 'Search leads',
+        semantic: 'Searching leads',
+        async execute(ctx) {
+          return ctx.providers.call({ providerId: 'serper', operationId: 'maps' })
+        },
+      })
+      .build()
+
+    expect(app.describe().runtime).toEqual({
+      capabilities: ['providerProxy.call'],
+      providerProxy: {
+        providers: [{ providerId: 'serper', operationIds: ['maps'] }],
+      },
+    })
+    expect(app.manifest()).toMatchObject({
+      runtime: {
+        engine: 'node',
+        capabilities: ['providerProxy.call'],
+        providerProxy: {
+          providers: [{ providerId: 'serper', operationIds: ['maps'] }],
+        },
+      },
+      requiredCapabilities: ['providerProxy.call'],
+    })
   })
 })

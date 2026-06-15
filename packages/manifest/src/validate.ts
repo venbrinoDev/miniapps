@@ -3,6 +3,12 @@ import { MiniAppError } from '@miniapps/protocol'
 import type { MiniAppManifest } from './schema.js'
 import { manifestSchema, capabilityIdSchema } from './schema.js'
 
+type NormalizedRuntime = Exclude<MiniAppManifest['runtime'], 'node'>
+
+interface NormalizedMiniAppManifest extends Omit<MiniAppManifest, 'runtime'> {
+  runtime: NormalizedRuntime
+}
+
 export interface ValidationResult {
   valid: boolean
   errors: string[]
@@ -13,9 +19,10 @@ export function validateManifest(data: unknown): ValidationResult {
   const result = manifestSchema.safeParse(data)
 
   if (result.success) {
-    const manifest = result.data
+    const manifest = normalizeManifestCapabilities(result.data)
+    const effectiveCapabilities = manifest.requiredCapabilities
     const permissionCapabilities = Object.keys(manifest.permissions)
-    const missingPermissions = manifest.requiredCapabilities.filter(
+    const missingPermissions = effectiveCapabilities.filter(
       (cap) => !permissionCapabilities.includes(cap),
     )
 
@@ -29,7 +36,7 @@ export function validateManifest(data: unknown): ValidationResult {
     }
 
     const extraPermissions = permissionCapabilities.filter(
-      (cap) => !manifest.requiredCapabilities.includes(cap as CapabilityId),
+      (cap) => !effectiveCapabilities.includes(cap as CapabilityId),
     )
 
     if (extraPermissions.length > 0) {
@@ -38,6 +45,14 @@ export function validateManifest(data: unknown): ValidationResult {
         errors: extraPermissions.map(
           (cap) => `Permission "${cap}" is declared but capability is not in requiredCapabilities`,
         ),
+      }
+    }
+
+    const providerProxyProviders = manifest.runtime?.providerProxy?.providers ?? []
+    if (providerProxyProviders.length > 0 && !effectiveCapabilities.includes('providerProxy.call')) {
+      return {
+        valid: false,
+        errors: ['runtime.providerProxy.providers requires capability "providerProxy.call"'],
       }
     }
 
@@ -54,10 +69,36 @@ export function validateManifest(data: unknown): ValidationResult {
 }
 
 export function assertCapabilityAllowed(manifest: MiniAppManifest, capability: CapabilityId): void {
-  if (!manifest.requiredCapabilities.includes(capability)) {
+  const normalized = normalizeManifestCapabilities(manifest)
+  if (!normalized.requiredCapabilities.includes(capability)) {
     throw new MiniAppError(
       'MANIFEST_VIOLATION',
       `Capability "${capability}" is not declared in the mini-app manifest "${manifest.id}"`,
     )
   }
+}
+
+function normalizeManifestCapabilities(manifest: MiniAppManifest): NormalizedMiniAppManifest {
+  const runtimeConfig = normalizeRuntime(manifest.runtime)
+  const runtimeCapabilities = runtimeConfig?.capabilities ?? []
+  const capabilities = runtimeCapabilities.length > 0
+    ? runtimeCapabilities
+    : manifest.requiredCapabilities
+  return {
+    ...manifest,
+    requiredCapabilities: capabilities,
+    runtime: runtimeConfig
+      ...runtimeConfig,
+      capabilities,
+    },
+  }
+}
+
+function normalizeRuntime(
+  runtime: MiniAppManifest['runtime'],
+): NormalizedRuntime {
+  if (!runtime || runtime === 'node') {
+    return { engine: 'node', capabilities: [] }
+  }
+  return runtime
 }

@@ -4,6 +4,7 @@ import type {
   CommandDefinition,
   ArgDefinition,
   DescribeOutput,
+  MiniAppRuntimeConfig,
 } from './config.js'
 import { CommandContext } from './context.js'
 import { MiniAppInstance } from './instance.js'
@@ -65,7 +66,31 @@ export class MiniApp {
       instruction: this.config.instruction,
       files: this.config.files,
       commands,
-      capabilities: this.config.requiredCapabilities ?? [],
+      capabilities: resolveCapabilities(this.config),
+      runtime: normalizeRuntimeConfig(this.config),
+    }
+  }
+
+  manifest(): Record<string, unknown> {
+    const capabilities = resolveCapabilities(this.config)
+    return {
+      id: this.config.id,
+      name: this.config.name,
+      version: this.config.version,
+      runtime: {
+        engine: 'node',
+        ...(normalizeRuntimeConfig(this.config) ?? {}),
+        capabilities,
+      },
+      entry: this.config.entry ?? 'src/index.ts',
+      description: this.config.description,
+      category: this.config.category,
+      instruction: this.config.instruction,
+      files: this.config.files,
+      commands: this.describe().commands,
+      requiredCapabilities: capabilities,
+      permissions: this.config.permissions ?? {},
+      timeout: this.config.timeout,
     }
   }
 
@@ -112,6 +137,10 @@ export class MiniApp {
 
   private async listenCli(): Promise<void> {
     const argv = process.argv.slice(2)
+    if (argv[0] === '--help' || argv[0] === '-h') {
+      this.writeHelp()
+      return
+    }
     if (argv.length === 0) {
       process.stdout.write(JSON.stringify({ error: 'No command specified' }, null, 2) + '\n')
       process.exit(1)
@@ -150,12 +179,25 @@ export class MiniApp {
 
     try {
       const result = await entry.definition.execute(ctx)
-      process.stdout.write(JSON.stringify(result ?? {}, null, 2) + '\n')
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n')
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       process.stderr.write(JSON.stringify({ error: message }, null, 2) + '\n')
       process.exit(1)
     }
+  }
+
+  private writeHelp(): void {
+    const lines = [
+      `${this.config.name} (${this.config.id})`,
+      this.config.description ?? 'No description provided.',
+      '',
+      'Commands:',
+      ...Array.from(this.commands.values()).map((command) => `  ${command.name} - ${command.definition.description}`),
+    ]
+    process.stdout.write(`${lines.join('\n')}\n`)
   }
 
   private parseArgs(argv: string[], argDefs: ArgDefinition[]): Record<string, string> {
@@ -179,5 +221,21 @@ export class MiniApp {
       }
     }
     return args
+  }
+}
+
+function resolveCapabilities(config: MiniAppConfig): CapabilityId[] {
+  return config.runtime?.capabilities?.length
+    ? config.runtime.capabilities
+    : (config.requiredCapabilities ?? [])
+}
+
+function normalizeRuntimeConfig(config: MiniAppConfig): MiniAppRuntimeConfig | undefined {
+  if (!config.runtime) {
+    return undefined
+  }
+  return {
+    ...config.runtime,
+    capabilities: resolveCapabilities(config),
   }
 }

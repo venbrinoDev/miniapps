@@ -47,12 +47,15 @@ export async function initCommand(): Promise<void> {
       id,
       name,
       version,
-      runtime: 'node',
       entry,
       description: description || undefined,
       category: category || undefined,
       instruction: './SKILL.md',
       files: ['./references/transfer-flow.md', './references/providers.md'],
+      runtime: {
+        engine: 'node',
+        capabilities,
+      },
       requiredCapabilities: capabilities,
       permissions,
     }
@@ -116,9 +119,9 @@ You are a ${escapeString(name)} assistant. Describe how this mini-app works for 
     }
 
     if (!existsSync(join(srcDir, 'index.ts'))) {
-      const entryContent = `import { MiniApp } from '@miniapps/sdk'
+      const entryContent = `import { defineMiniApp } from '@miniapps/sdk'
 
-const app = new MiniApp({
+const app = defineMiniApp({
   id: '${escapeString(id)}',
   name: '${escapeString(name)}',
   version: '${escapeString(version)}',
@@ -126,15 +129,19 @@ const app = new MiniApp({
   files: ['./references/transfer-flow.md', './references/providers.md'],
   description: ${description ? `'${escapeString(description)}'` : 'undefined'},
   category: ${category ? `'${escapeString(category)}'` : 'undefined'},
+  runtime: {
+    capabilities: ${JSON.stringify(capabilities)},
+  },
+  permissions: ${JSON.stringify(permissions, null, 2)},
 })
-
-app.command('help', {
+  .command('help', {
   description: 'Show available commands',
   semantic: 'Showing help',
   async execute(ctx) {
     return { commands: ['help'] }
   },
-})
+  })
+  .build()
 
 export default app
 `

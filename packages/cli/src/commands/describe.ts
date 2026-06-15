@@ -55,7 +55,8 @@ export async function describeCommand(): Promise<void> {
         semantic: cmd.semantic,
         args: cmd.args ?? [],
       })),
-      capabilities: manifest.requiredCapabilities,
+      capabilities: manifest.runtime?.capabilities ?? manifest.requiredCapabilities,
+      runtime: manifest.runtime,
     }
   }
 

@@ -1,18 +1,18 @@
 import type {
-  DeviceErrorResponse,
   DeviceEvent,
-  DeviceResponse,
 } from '@miniapps/protocol'
 import type {
   BiometricNamespace,
   CameraNamespace,
   GpsNamespace,
+  ProviderProxyNamespace,
   StorageNamespace,
 } from './capabilities.js'
 import {
   createBiometricNamespace,
   createCameraNamespace,
   createGpsNamespace,
+  createProviderProxyNamespace,
   createStorageNamespace,
 } from './capabilities.js'
 import type { Transport } from './transport.js'
@@ -29,6 +29,7 @@ export class MiniAppClient {
   public readonly biometric: BiometricNamespace
   public readonly camera: CameraNamespace
   public readonly gps: GpsNamespace
+  public readonly providers: ProviderProxyNamespace
   public readonly storage: StorageNamespace
 
   private config: Required<MiniAppClientConfig>
@@ -51,6 +52,7 @@ export class MiniAppClient {
     this.biometric = createBiometricNamespace(transport, getCtx)
     this.camera = createCameraNamespace(transport, getCtx)
     this.gps = createGpsNamespace(transport, getCtx)
+    this.providers = createProviderProxyNamespace(transport, getCtx)
     this.storage = createStorageNamespace(transport, getCtx)
   }
 }

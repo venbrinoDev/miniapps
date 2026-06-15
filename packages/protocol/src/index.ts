@@ -10,8 +10,15 @@ export type {
   CapabilityResultMap,
   GpsGetCurrentPositionParams,
   GpsGetCurrentPositionResult,
+  ProviderProxyCallParams,
+  ProviderProxyCallResult,
   StoragePickFileParams,
   StoragePickFileResult,
+} from './capabilities.js'
+export {
+  getCapabilityExecutionTarget,
+  HOST_CAPABILITY_IDS,
+  RUNTIME_CAPABILITY_IDS,
 } from './capabilities.js'
 export type { ErrorCode } from './errors.js'
 export { ERROR_MESSAGES, MiniAppError } from './errors.js'

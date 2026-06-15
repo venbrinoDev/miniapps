@@ -149,4 +149,27 @@ describe('MiniAppClient', () => {
 
     expect(transport.lastRequest!.timeoutMs).toBe(30_000)
   })
+
+  it('providers.call sends provider proxy requests', async () => {
+    const transport = createMockTransport()
+    const client = new MiniAppClient(transport, defaultConfig)
+
+    const promise = client.providers.call({
+      providerId: 'serper',
+      operationId: 'maps',
+      body: { q: 'restaurants in lagos' },
+    }).toPromise()
+
+    expect(transport.lastRequest!.capability).toBe('providerProxy.call')
+    expect(transport.lastRequest!.params).toEqual({
+      providerId: 'serper',
+      operationId: 'maps',
+      body: { q: 'restaurants in lagos' },
+      reason: 'Provider proxy call serper/maps',
+    })
+
+    transport.resolveLast({ status: 200, data: { places: [] } })
+    const result = await promise
+    expect(result).toEqual({ status: 200, data: { places: [] } })
+  })
 })

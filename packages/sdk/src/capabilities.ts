@@ -7,6 +7,7 @@ import type {
   CapabilityResultMap,
   DeviceRequest,
   GpsGetCurrentPositionParams,
+  ProviderProxyCallParams,
   StoragePickFileParams,
 } from '@miniapps/protocol'
 import type { Transport } from './transport.js'
@@ -114,6 +115,10 @@ export interface StorageNamespace {
   pickFile(params: StoragePickFileParams): CapabilityRequestBuilder<'storage.pickFile'>
 }
 
+export interface ProviderProxyNamespace {
+  call(params: ProviderProxyCallParams): CapabilityRequestBuilder<'providerProxy.call'>
+}
+
 export function createBiometricNamespace(
   transport: Transport,
   getCtx: () => { miniAppId: string; sessionId: string; userId: string; deviceId: string; timeoutMs: number },
@@ -148,5 +153,21 @@ export function createStorageNamespace(
 ): StorageNamespace {
   return {
     pickFile: createCapabilityMethod(transport, 'storage.pickFile', getCtx),
+  }
+}
+
+export function createProviderProxyNamespace(
+  transport: Transport,
+  getCtx: () => { miniAppId: string; sessionId: string; userId: string; deviceId: string; timeoutMs: number },
+): ProviderProxyNamespace {
+  return {
+    call: (params) => createCapabilityMethod(
+      transport,
+      'providerProxy.call',
+      getCtx,
+    )({
+      ...params,
+      reason: params.reason ?? `Provider proxy call ${params.providerId}/${params.operationId}`,
+    }),
   }
 }

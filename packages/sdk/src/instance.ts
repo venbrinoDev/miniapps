@@ -1,6 +1,11 @@
 import type { Transport } from './transport.js'
+import type { ProviderProxyCallParams, ProviderProxyCallResult } from '@miniapps/protocol'
 
 export class MiniAppInstance {
+  public readonly providers: {
+    call: (params: ProviderProxyCallParams) => Promise<ProviderProxyCallResult>
+  }
+
   constructor(
     private transport: Transport,
     private context: {
@@ -10,7 +15,14 @@ export class MiniAppInstance {
       deviceId: string
       timeoutMs: number
     },
-  ) {}
+  ) {
+    this.providers = {
+      call: (params) => this.request<ProviderProxyCallResult>('providerProxy.call', {
+        ...params,
+        reason: params.reason ?? `Provider proxy call ${params.providerId}/${params.operationId}`,
+      }),
+    }
+  }
 
   async verifyBiometric(params: { reason: string; semantic?: string }): Promise<boolean> {
     const result = await this.transport.sendRequest<{ authenticated: boolean }>({
@@ -97,7 +109,7 @@ export class MiniAppInstance {
       deviceId: this.context.deviceId,
       capability: capability as any,
       params,
-      reason: (params.reason as string) || 'Device capability request',
+      reason: (params.reason as string) || `Mini-app capability request: ${capability}`,
       timeoutMs: this.context.timeoutMs,
     } as any)
   }

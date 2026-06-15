@@ -119,7 +119,10 @@ describe('validateManifest', () => {
   it('defaults runtime to node', () => {
     const result = validateManifest(validManifest)
     expect(result.valid).toBe(true)
-    expect(result.manifest!.runtime).toBe('node')
+    expect(result.manifest!.runtime).toEqual({
+      engine: 'node',
+      capabilities: ['biometric.authenticate', 'camera.scanQr'],
+    })
   })
 
   it('accepts manifests without permissions when no capabilities are declared', () => {
@@ -175,6 +178,50 @@ describe('validateManifest', () => {
     expect(result.manifest!.commands).toHaveLength(1)
     expect(result.manifest!.commands![0].name).toBe('naira.transfer')
     expect(result.manifest!.commands![0].semantic).toBe('Transferring funds')
+  })
+
+  it('accepts runtime provider proxy configuration when providerProxy.call is declared', () => {
+    const result = validateManifest({
+      ...validManifest,
+      runtime: {
+        engine: 'node',
+        capabilities: ['providerProxy.call'],
+        providerProxy: {
+          providers: [
+            {
+              providerId: 'serper',
+              operationIds: ['maps'],
+            },
+          ],
+        },
+      },
+      requiredCapabilities: ['providerProxy.call'],
+      permissions: {
+        'providerProxy.call': { reason: 'Call approved backend providers' },
+      },
+    })
+    expect(result.valid).toBe(true)
+    expect(result.manifest!.runtime).toEqual({
+      engine: 'node',
+      capabilities: ['providerProxy.call'],
+      providerProxy: {
+        providers: [{ providerId: 'serper', operationIds: ['maps'] }],
+      },
+    })
+  })
+
+  it('rejects runtime provider proxy configuration without providerProxy.call capability', () => {
+    const result = validateManifest({
+      ...validManifest,
+      runtime: {
+        engine: 'node',
+        providerProxy: {
+          providers: [{ providerId: 'serper', operationIds: ['maps'] }],
+        },
+      },
+    })
+    expect(result.valid).toBe(false)
+    expect(result.errors[0]).toContain('providerProxy.call')
   })
 
   it('rejects command without name', () => {

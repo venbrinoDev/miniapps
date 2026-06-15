@@ -30,7 +30,10 @@ export async function validateCommand(): Promise<void> {
   console.log(`  id: ${m.id}`)
   console.log(`  name: ${m.name}`)
   console.log(`  version: ${m.version}`)
-  console.log(`  capabilities: ${m.requiredCapabilities.join(', ')}`)
+  console.log(`  capabilities: ${(m.runtime?.capabilities ?? m.requiredCapabilities).join(', ')}`)
+  if (m.runtime?.providerProxy?.providers?.length) {
+    console.log(`  provider proxy: ${m.runtime.providerProxy.providers.map((row) => row.providerId).join(', ')}`)
+  }
   if (m.description) console.log(`  description: ${m.description}`)
   if (m.category) console.log(`  category: ${m.category}`)
   if (m.commands && m.commands.length > 0) {

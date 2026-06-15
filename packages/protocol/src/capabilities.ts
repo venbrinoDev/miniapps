@@ -4,6 +4,21 @@ export type CapabilityId =
   | 'camera.capture'
   | 'gps.getCurrentPosition'
   | 'storage.pickFile'
+  | 'providerProxy.call'
+
+export type CapabilityExecutionTarget = 'host' | 'runtime'
+
+export const HOST_CAPABILITY_IDS = [
+  'biometric.authenticate',
+  'camera.scanQr',
+  'camera.capture',
+  'gps.getCurrentPosition',
+  'storage.pickFile',
+] as const satisfies readonly CapabilityId[]
+
+export const RUNTIME_CAPABILITY_IDS = [
+  'providerProxy.call',
+] as const satisfies readonly CapabilityId[]
 
 export interface BiometricAuthenticateParams {
   reason: string
@@ -55,12 +70,29 @@ export interface StoragePickFileResult {
   mimeType: string
 }
 
+export interface ProviderProxyCallParams {
+  providerId: string
+  operationId: string
+  body?: unknown
+  query?: Record<string, string | number | boolean>
+  path?: Record<string, string>
+  headers?: Record<string, string>
+  reason?: string
+}
+
+export interface ProviderProxyCallResult {
+  status: number
+  headers?: Record<string, string>
+  data: unknown
+}
+
 export interface CapabilityParamMap {
   'biometric.authenticate': BiometricAuthenticateParams
   'camera.scanQr': CameraScanQrParams
   'camera.capture': CameraCaptureParams
   'gps.getCurrentPosition': GpsGetCurrentPositionParams
   'storage.pickFile': StoragePickFileParams
+  'providerProxy.call': ProviderProxyCallParams
 }
 
 export interface CapabilityResultMap {
@@ -69,4 +101,9 @@ export interface CapabilityResultMap {
   'camera.capture': CameraCaptureResult
   'gps.getCurrentPosition': GpsGetCurrentPositionResult
   'storage.pickFile': StoragePickFileResult
+  'providerProxy.call': ProviderProxyCallResult
+}
+
+export function getCapabilityExecutionTarget(capability: CapabilityId): CapabilityExecutionTarget {
+  return (RUNTIME_CAPABILITY_IDS as readonly string[]).includes(capability) ? 'runtime' : 'host'
 }

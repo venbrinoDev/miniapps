@@ -6,6 +6,7 @@ export const CAPABILITY_IDS = [
   'camera.capture',
   'gps.getCurrentPosition',
   'storage.pickFile',
+  'providerProxy.call',
 ] as const
 
 export const capabilityIdSchema = z.enum(CAPABILITY_IDS)
@@ -28,6 +29,37 @@ export const commandDefinitionSchema = z.object({
   args: z.array(argDefinitionSchema).optional(),
 })
 
+export const runtimeConfigSchema = z.object({
+  engine: z.literal('node').default('node'),
+  capabilities: z.array(capabilityIdSchema).default([]).optional(),
+  providerProxy: z
+    .object({
+      providers: z.array(
+        z.object({
+          providerId: z
+            .string()
+            .min(2)
+            .max(80)
+            .regex(/^[a-z0-9][a-z0-9._-]*$/, 'providerId must be lowercase letters, numbers, dots, underscores, or dashes'),
+          operationIds: z.array(
+            z
+              .string()
+              .min(1)
+              .max(80)
+              .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, 'operationId must be letters, numbers, dots, underscores, or dashes'),
+          ).default([]).optional(),
+        }),
+      ).default([]),
+    })
+    .optional(),
+  compatibility: z
+    .object({
+      minHostVersion: z.string().optional(),
+    })
+    .optional(),
+  execution: z.record(z.string(), z.unknown()).optional(),
+})
+
 export const manifestSchema = z.object({
   id: z
     .string()
@@ -35,7 +67,7 @@ export const manifestSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'ID must be lowercase alphanumeric with hyphens'),
   name: z.string().min(1),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'Version must be semver (e.g. 1.0.0)'),
-  runtime: z.literal('node').default('node'),
+  runtime: z.union([z.literal('node'), runtimeConfigSchema]).default('node'),
   entry: z.string().min(1),
   description: z.string().optional(),
   category: z.string().optional(),
